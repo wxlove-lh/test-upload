@@ -32,6 +32,16 @@
             >
               {{ statusText(item.status) }}
             </van-tag>
+            <span
+              class="voucher-link"
+              @click.stop="$emit('voucher', item)"
+            >
+              <van-icon name="photo-o" />
+              <span v-if="item.voucher_urls && item.voucher_urls.length > 0">
+                凭证({{ item.voucher_urls.length }})
+              </span>
+              <span v-else>凭证</span>
+            </span>
           </div>
         </template>
         <template #value>
@@ -61,7 +71,7 @@ const props = defineProps({
   type: { type: String, default: '' },
 })
 
-const emit = defineEmits(['edit', 'totalChange'])
+const emit = defineEmits(['edit', 'voucher', 'totalChange'])
 
 const transactions = ref([])
 const loading = ref(false)
@@ -189,6 +199,19 @@ watch(
 }
 
 .status-tag {
+  flex-shrink: 0;
+}
+
+.voucher-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  color: #1989fa;
+  cursor: pointer;
+  padding: 2px 6px;
+  background: #e8f4ff;
+  border-radius: 4px;
   flex-shrink: 0;
 }
 

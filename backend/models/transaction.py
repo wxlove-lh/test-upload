@@ -12,9 +12,11 @@ class Transaction(db.Model):
     type = db.Column(db.String(10))  # 'income' 或 'expense'
     category = db.Column(db.String(50))
     supplier = db.Column(db.String(100))
+    customer_name = db.Column(db.String(50))  # 关联的客户（客户台账里的称呼），可空
     notes = db.Column(db.Text)
     status = db.Column(db.String(20), default='pending')  # pending/confirmed/modified
     source_image_url = db.Column(db.String(500), nullable=True)
+    voucher_urls = db.Column(db.Text, nullable=True)  # 凭证图片文件名，逗号分隔
     ai_confidence = db.Column(db.String(10))  # high/medium/low
     ai_match_status = db.Column(db.String(20))  # matched/needs_check
     confirmed_at = db.Column(db.DateTime, nullable=True)

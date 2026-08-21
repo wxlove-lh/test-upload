@@ -1,0 +1,32 @@
+{
+  "name": "AI虚拟文员 - 记账报税助手",
+  "short_name": "AI虚拟文员",
+  "description": "餐饮小店的AI记账与报税辅助工具：拍照记账、报表、报税底稿、申报提醒",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F6F8F7",
+  "theme_color": "#123F33",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

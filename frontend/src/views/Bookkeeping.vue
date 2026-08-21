@@ -168,7 +168,7 @@ onMounted(() => {
 <style scoped>
 .page-container {
   min-height: 100vh;
-  background-color: #f7f8fa;
+  background-color: var(--bg);
   padding-bottom: 50px; /* 底部tabbar空间 */
 }
 
@@ -183,13 +183,13 @@ onMounted(() => {
 }
 
 .amount-income {
-  color: #07c160;
+  color: var(--up);
   font-size: 16px;
   font-weight: bold;
 }
 
 .amount-expense {
-  color: #ee0a24;
+  color: var(--down);
   font-size: 16px;
   font-weight: bold;
 }
@@ -200,7 +200,7 @@ onMounted(() => {
   left: 0;
   right: 0;
   display: flex;
-  background: #fff;
+  background: var(--card);
   padding: 12px 16px;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
   z-index: 10;
@@ -216,7 +216,7 @@ onMounted(() => {
 
 .summary-label {
   font-size: 12px;
-  color: #969799;
+  color: var(--ink-3);
 }
 
 .summary-value {
@@ -225,10 +225,10 @@ onMounted(() => {
 }
 
 .summary-value.income {
-  color: #07c160;
+  color: var(--up);
 }
 
 .summary-value.expense {
-  color: #ee0a24;
+  color: var(--down);
 }
 </style>

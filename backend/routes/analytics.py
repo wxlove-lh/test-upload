@@ -322,3 +322,107 @@ def comparison():
         'mom': mom,
         'yoy': yoy,
     })
+
+
+@analytics_bp.route('/category-summary', methods=['GET'])
+@jwt_required()
+def category_summary():
+    """按分类汇总：每个分类的收入/支出/结余（默认本月）"""
+    user_id = get_jwt_identity()
+
+    today = date.today()
+    default_start = today.replace(day=1)
+    default_end = today
+
+    start_date = _parse_date(request.args.get('start_date'), default_start)
+    end_date = _parse_date(request.args.get('end_date'), default_end)
+
+    rows = _base_query(user_id, start_date, end_date).with_entities(
+        Transaction.category,
+        Transaction.type,
+        func.sum(Transaction.amount).label('amount'),
+    ).group_by(Transaction.category, Transaction.type).all()
+
+    by_category = {}
+    for row in rows:
+        cat = row.category or '未分类'
+        entry = by_category.setdefault(cat, {'category': cat, 'income': 0.0, 'expense': 0.0})
+        amount = float(row.amount or 0)
+        if row.type == 'income':
+            entry['income'] = round(entry['income'] + amount, 2)
+        else:
+            entry['expense'] = round(entry['expense'] + amount, 2)
+
+    categories = []
+    for cat, entry in by_category.items():
+        entry['net'] = round(entry['income'] - entry['expense'], 2)
+        entry['total'] = round(entry['income'] + entry['expense'], 2)
+        categories.append(entry)
+
+    # 按金额大小排序
+    categories.sort(key=lambda x: -x['total'])
+
+    totals = {
+        'income': round(sum(c['income'] for c in categories), 2),
+        'expense': round(sum(c['expense'] for c in categories), 2),
+    }
+    totals['profit'] = round(totals['income'] - totals['expense'], 2)
+
+    return jsonify({
+        'period': {'start': start_date.isoformat(), 'end': end_date.isoformat()},
+        'categories': categories,
+        'totals': totals,
+    })
+
+
+@analytics_bp.route('/quarterly', methods=['GET'])
+@jwt_required()
+def quarterly():
+    """按季度汇总：指定年份四个季度的收入/支出/利润（默认今年）"""
+    user_id = get_jwt_identity()
+
+    today = date.today()
+    year = request.args.get('year', type=int)
+    if not year:
+        year = today.year
+
+    def quarter_bounds(y, q):
+        q_start_month = (q - 1) * 3 + 1
+        q_end_month = q_start_month + 2
+        start = date(y, q_start_month, 1)
+        if q_end_month == 12:
+            end = date(y, 12, 31)
+        else:
+            end = date(y, q_end_month + 1, 1) - timedelta(days=1)
+        return start, end
+
+    quarters = []
+    for q in range(1, 5):
+        start, end = quarter_bounds(year, q)
+        row = _base_query(user_id, start, end).with_entities(
+            func.sum(case((Transaction.type == 'income', Transaction.amount), else_=0)).label('income'),
+            func.sum(case((Transaction.type == 'expense', Transaction.amount), else_=0)).label('expense'),
+        ).first()
+
+        income = float(row.income or 0)
+        expense = float(row.expense or 0)
+        quarters.append({
+            'quarter': q,
+            'label': f'{year}年第{q}季度',
+            'months': f'{q * 3 - 2}~{q * 3}月',
+            'income': round(income, 2),
+            'expense': round(expense, 2),
+            'profit': round(income - expense, 2),
+        })
+
+    year_totals = {
+        'income': round(sum(x['income'] for x in quarters), 2),
+        'expense': round(sum(x['expense'] for x in quarters), 2),
+    }
+    year_totals['profit'] = round(year_totals['income'] - year_totals['expense'], 2)
+
+    return jsonify({
+        'year': year,
+        'quarters': quarters,
+        'totals': year_totals,
+    })

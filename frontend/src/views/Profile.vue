@@ -6,21 +6,25 @@
       <div class="section subscription-section">
         <div class="subscription-info">
           <p class="subscription-label">您当前是：</p>
-          <p
-            class="subscription-name"
-            :class="{ 'text-danger': isExpired || userStore.isExpiringSoon }"
-          >
-            {{ displaySubscription }}
-          </p>
-          <p v-if="userStore.userInfo?.subscription_expiry" class="expiry-date">
-            到期日：{{ formatDate(userStore.userInfo.subscription_expiry) }}
-          </p>
-          <p v-if="isExpired" class="expiry-warning">
-            您的套餐已过期，请续费
-          </p>
-          <p v-else-if="userStore.isExpiringSoon" class="expiry-warning">
-            您的套餐还有{{ userStore.daysUntilExpiry }}天到期，请尽快续费
-          </p>
+          <p v-if="!userStore.userInfo && !fetchFailed" class="subscription-name">加载中...</p>
+          <p v-else-if="!userStore.userInfo && fetchFailed" class="subscription-name">数据加载失败，请刷新重试</p>
+          <template v-else>
+            <p
+              class="subscription-name"
+              :class="{ 'text-danger': isExpired || userStore.isExpiringSoon }"
+            >
+              {{ displaySubscription }}
+            </p>
+            <p v-if="userStore.userInfo?.subscription_expiry" class="expiry-date">
+              到期日：{{ formatDate(userStore.userInfo.subscription_expiry) }}
+            </p>
+            <p v-if="isExpired" class="expiry-warning">
+              您的套餐已过期，请续费
+            </p>
+            <p v-else-if="userStore.isExpiringSoon" class="expiry-warning">
+              您的套餐还有{{ userStore.daysUntilExpiry }}天到期，请尽快续费
+            </p>
+          </template>
         </div>
         <div class="subscription-actions">
           <van-button type="primary" size="small" @click="goRenew">续费</van-button>
@@ -38,7 +42,7 @@
               </van-button>
             </template>
           </van-cell>
-          <van-cell title="已邀请" :value="referralData?.invited_count + '人' || '0人'" />
+          <van-cell title="已邀请" :value="(referralData?.invited_count ?? 0) + '人'" />
           <van-cell title="优惠券" :value="coupons.length + '张'" />
         </van-cell-group>
       </div>
@@ -93,6 +97,7 @@ import { getReferralInfo } from '@/api/referral'
 
 const router = useRouter()
 const userStore = useUserStore()
+const fetchFailed = ref(false)
 
 // 推荐/裂变数据
 const referralData = ref(null)
@@ -112,7 +117,7 @@ const isExpired = computed(() => {
 
 // 显示订阅文本
 const displaySubscription = computed(() => {
-  if (!userStore.userInfo) return '加载中...'
+  if (!userStore.userInfo) return ''
   const plan = userStore.userInfo.subscription_plan
   if (!plan || plan === 'free') {
     const remaining = userStore.userInfo.remaining_free_uses
@@ -216,9 +221,14 @@ async function loadReferralData() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   if (!userStore.userInfo) {
-    userStore.fetchUserInfo()
+    try {
+      await userStore.fetchUserInfo()
+      if (!userStore.userInfo) fetchFailed.value = true
+    } catch {
+      fetchFailed.value = true
+    }
   }
   loadReferralData()
 })
@@ -227,7 +237,7 @@ onMounted(() => {
 <style scoped>
 .page-container {
   min-height: 100vh;
-  background-color: #f7f8fa;
+  background-color: var(--bg);
 }
 .page-content {
   padding-bottom: 80px;
@@ -236,35 +246,35 @@ onMounted(() => {
   margin: 12px 0;
 }
 .subscription-section {
-  background: #fff;
-  padding: 20px 16px;
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-strong) 100%);
+  padding: 22px 20px;
   margin: 0;
 }
 .subscription-info {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 .subscription-label {
   font-size: 13px;
-  color: #969799;
-  margin-bottom: 4px;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 6px;
 }
 .subscription-name {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
-  color: #1a3a5c;
-  margin-bottom: 4px;
+  color: #fff;
+  margin-bottom: 6px;
 }
 .subscription-name.text-danger {
-  color: #ee0a24;
+  color: #FFD2C8;
 }
 .expiry-date {
   font-size: 13px;
-  color: #969799;
+  color: rgba(255, 255, 255, 0.7);
   margin-bottom: 2px;
 }
 .expiry-warning {
   font-size: 13px;
-  color: #ee0a24;
+  color: #FFD2C8;
   margin-top: 4px;
   font-weight: 500;
 }
@@ -276,12 +286,12 @@ onMounted(() => {
   padding: 16px;
 }
 :deep(.coupon-status-unused) {
-  color: #07c160;
+  color: var(--up);
 }
 :deep(.coupon-status-used) {
-  color: #969799;
+  color: var(--ink-3);
 }
 :deep(.coupon-status-expired) {
-  color: #ee0a24;
+  color: var(--down);
 }
 </style>

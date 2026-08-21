@@ -1,4 +1,6 @@
-from flask import Blueprint, request, jsonify, send_file
+import os
+import uuid
+from flask import Blueprint, request, jsonify, send_file, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
 from decimal import Decimal
@@ -11,6 +13,22 @@ from sqlalchemy import func
 
 transaction_bp = Blueprint('transaction', __name__)
 
+# 凭证图片允许的类型与大小
+ALLOWED_VOUCHER_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'}
+MAX_VOUCHER_SIZE = 10 * 1024 * 1024  # 10MB
+
+
+def _voucher_allowed(filename: str) -> bool:
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_VOUCHER_EXTENSIONS
+
+
+def voucher_names_to_urls(voucher_urls: str) -> list:
+    """把数据库里逗号分隔的凭证文件名转成可访问的URL列表"""
+    if not voucher_urls:
+        return []
+    names = [n for n in voucher_urls.split(',') if n]
+    return [f'/api/transactions/vouchers/{n}' for n in names]
+
 
 def serialize_transaction(t):
     """将Transaction对象序列化为字典"""
@@ -22,9 +40,11 @@ def serialize_transaction(t):
         'type': t.type,
         'category': t.category,
         'supplier': t.supplier,
+        'customer_name': t.customer_name,
         'notes': t.notes,
         'status': t.status,
         'source_image_url': t.source_image_url,
+        'voucher_urls': voucher_names_to_urls(t.voucher_urls),
         'ai_confidence': t.ai_confidence,
         'ai_match_status': t.ai_match_status,
         'confirmed_at': t.confirmed_at.strftime('%Y-%m-%d %H:%M:%S') if t.confirmed_at else None,
@@ -51,6 +71,7 @@ def build_transaction_query(user_id, args):
     end_date = parse_date(args.get('end_date'))
     category = args.get('category')
     tx_type = args.get('type')
+    customer_name = (args.get('customer_name') or '').strip()
 
     if start_date:
         query = query.filter(Transaction.transaction_date >= start_date)
@@ -60,6 +81,8 @@ def build_transaction_query(user_id, args):
         query = query.filter_by(category=category)
     if tx_type:
         query = query.filter_by(type=tx_type)
+    if customer_name:
+        query = query.filter(Transaction.customer_name == customer_name)
 
     return query
 
@@ -99,6 +122,7 @@ def create_transaction():
             type=data['type'],
             category=data.get('category'),
             supplier=data.get('supplier'),
+            customer_name=(data.get('customer_name') or '').strip() or None,
             notes=data.get('notes', ''),
             status='confirmed',
             confirmed_at=datetime.utcnow(),
@@ -169,6 +193,7 @@ def update_transaction(id):
             'type': 'type',
             'category': 'category',
             'supplier': 'supplier',
+            'customer_name': 'customer_name',
             'notes': 'notes',
             'ai_confidence': 'ai_confidence',
             'ai_match_status': 'ai_match_status',
@@ -358,3 +383,89 @@ def export_transactions():
 
     except Exception as e:
         return jsonify({'error': f'导出失败: {str(e)}'}), 500
+
+
+# ──────────────────────────────────────────────
+# 端点6：POST /api/transactions/<id>/vouchers - 上传凭证图片
+# ──────────────────────────────────────────────
+@transaction_bp.route('/<int:id>/vouchers', methods=['POST'])
+@jwt_required()
+def upload_vouchers(id):
+    """给指定交易上传凭证图片（一张或多张），返回更新后的凭证URL列表"""
+    try:
+        current_user_id = get_jwt_identity()
+
+        transaction = Transaction.query.filter_by(id=id, user_id=current_user_id).first()
+        if not transaction:
+            return jsonify({'error': '交易记录不存在'}), 404
+
+        files = request.files.getlist('images')
+        if not files or len(files) == 0:
+            return jsonify({'error': '请选择要上传的凭证图片'}), 400
+
+        upload_dir = os.path.join(current_app.root_path, 'instance', 'uploads')
+        os.makedirs(upload_dir, exist_ok=True)
+
+        saved_names = []
+        for f in files:
+            if not f.filename or not _voucher_allowed(f.filename):
+                continue
+            data = f.read()
+            if len(data) == 0 or len(data) > MAX_VOUCHER_SIZE:
+                continue
+            ext = f.filename.rsplit('.', 1)[1].lower()
+            name = f'{uuid.uuid4().hex}.{ext}'
+            with open(os.path.join(upload_dir, name), 'wb') as out:
+                out.write(data)
+            saved_names.append(name)
+
+        if not saved_names:
+            return jsonify({'error': '没有成功上传的图片，请检查文件格式（JPG/PNG/GIF/WebP）和大小（≤10MB）'}), 400
+
+        # 追加到现有凭证列表
+        existing = [n for n in (transaction.voucher_urls or '').split(',') if n]
+        transaction.voucher_urls = ','.join(existing + saved_names)
+        transaction.status = 'modified' if transaction.status in ('confirmed', 'modified') else transaction.status
+        db.session.commit()
+
+        return jsonify({
+            'message': f'成功上传 {len(saved_names)} 张凭证',
+            'voucher_urls': voucher_names_to_urls(transaction.voucher_urls),
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'上传凭证失败: {str(e)}'}), 500
+
+
+# ──────────────────────────────────────────────
+# 端点7：GET /api/transactions/vouchers/<filename> - 访问凭证图片
+# ──────────────────────────────────────────────
+@transaction_bp.route('/vouchers/<path:filename>', methods=['GET'])
+@jwt_required()
+def get_voucher(filename):
+    """按文件名读取凭证图片（仅限上传该图片的用户）"""
+    try:
+        current_user_id = get_jwt_identity()
+
+        # 防止路径穿越
+        if '..' in filename or '/' in filename.replace('\\', '/'):
+            return jsonify({'error': '非法文件名'}), 400
+
+        # 校验该文件名属于当前用户
+        tx = Transaction.query.filter(
+            Transaction.user_id == current_user_id,
+            Transaction.voucher_urls.like(f'%{filename}%'),
+        ).first()
+        if not tx:
+            return jsonify({'error': '凭证不存在或无权访问'}), 404
+
+        upload_dir = os.path.join(current_app.root_path, 'instance', 'uploads')
+        file_path = os.path.join(upload_dir, filename)
+        if not os.path.exists(file_path):
+            return jsonify({'error': '凭证文件不存在'}), 404
+
+        return send_file(file_path, mimetype='image/jpeg')
+
+    except Exception as e:
+        return jsonify({'error': f'读取凭证失败: {str(e)}'}), 500

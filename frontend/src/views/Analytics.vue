@@ -21,26 +21,29 @@
         </van-tabs>
       </div>
 
-      <!-- 图表类型切换 -->
       <div class="chart-type-section">
-        <van-button-group size="small">
+        <div class="btn-group">
           <van-button
+            size="small"
             :type="chartType === 'bar' ? 'primary' : 'default'"
             @click="chartType = 'bar'"
           >柱状图</van-button>
           <van-button
+            size="small"
             :type="chartType === 'line' ? 'primary' : 'default'"
             @click="chartType = 'line'"
           >折线图</van-button>
           <van-button
+            size="small"
             :type="chartType === 'pie' ? 'primary' : 'default'"
             @click="chartType = 'pie'"
           >饼图</van-button>
           <van-button
+            size="small"
             :type="chartType === 'table' ? 'primary' : 'default'"
             @click="chartType = 'table'"
           >表格</van-button>
-        </van-button-group>
+        </div>
       </div>
 
       <!-- 图表面板 -->
@@ -274,7 +277,7 @@ onMounted(() => {
 <style scoped>
 .analytics-page {
   min-height: 100vh;
-  background-color: #f7f8fa;
+  background-color: var(--bg);
 }
 
 .page-content {
@@ -284,10 +287,11 @@ onMounted(() => {
 
 /* 维度切换 */
 .dimension-section {
-  background: #fff;
-  border-radius: 8px;
+  background: var(--card);
+  border-radius: var(--radius-sm);
   margin-bottom: 12px;
   overflow: hidden;
+  box-shadow: var(--shadow-1);
 }
 
 /* 图表类型切换 */
@@ -297,13 +301,24 @@ onMounted(() => {
   margin-bottom: 12px;
 }
 
-.chart-type-section .van-button-group {
+.chart-type-section .btn-group {
+  display: flex;
   width: 100%;
+  gap: 0;
 }
 
-.chart-type-section .van-button {
+.chart-type-section .btn-group .van-button {
   flex: 1;
   font-size: 13px;
+  border-radius: 0;
+}
+
+.chart-type-section .btn-group .van-button:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.chart-type-section .btn-group .van-button:last-child {
+  border-radius: 0 4px 4px 0;
 }
 
 /* 分析数据区 */
@@ -312,9 +327,10 @@ onMounted(() => {
 }
 
 .summary-grid {
-  background: #fff;
-  border-radius: 8px;
+  background: var(--card);
+  border-radius: var(--radius-sm);
   padding: 16px 0;
+  box-shadow: var(--shadow-1);
 }
 
 .summary-card {
@@ -323,7 +339,7 @@ onMounted(() => {
 
 .summary-label {
   font-size: 13px;
-  color: #969799;
+  color: var(--ink-3);
   margin-bottom: 6px;
 }
 
@@ -333,19 +349,20 @@ onMounted(() => {
 }
 
 .summary-value.income {
-  color: #07c160;
+  color: var(--up);
 }
 
 .summary-value.expense {
-  color: #ee0a24;
+  color: var(--down);
 }
 
 /* 同比环比 */
 .comparison-section {
-  background: #fff;
-  border-radius: 8px;
+  background: var(--card);
+  border-radius: var(--radius-sm);
   padding: 16px;
   margin-top: 12px;
+  box-shadow: var(--shadow-1);
 }
 
 .comparison-block {
@@ -359,7 +376,7 @@ onMounted(() => {
 .comparison-title {
   font-size: 14px;
   font-weight: 600;
-  color: #323233;
+  color: var(--ink);
   margin-bottom: 8px;
 }
 
@@ -371,16 +388,16 @@ onMounted(() => {
 
 .comparison-item {
   font-size: 13px;
-  color: #646566;
+  color: var(--ink-2);
 }
 
 .trend-up {
-  color: #07c160;
+  color: var(--up);
   font-weight: 500;
 }
 
 .trend-down {
-  color: #ee0a24;
+  color: var(--down);
   font-weight: 500;
 }
 </style>

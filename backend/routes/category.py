@@ -111,8 +111,8 @@ def update_category(category_id):
 
     category = Category.query.get_or_404(category_id)
 
-    # 权限校验：必须是系统默认或当前用户的分类
-    if category.user_id is not None and category.user_id != user_id:
+    # 权限校验：必须是系统默认或当前用户的分类（JWT身份是字符串，统一按字符串比较）
+    if category.user_id is not None and str(category.user_id) != str(user_id):
         return jsonify({'error': '无权修改该分类'}), 403
 
     # 检查新名称是否已被占用
@@ -171,8 +171,8 @@ def delete_category(category_id):
 
     category = Category.query.get_or_404(category_id)
 
-    # 只能删除自己的自定义分类
-    if category.user_id != user_id:
+    # 只能删除自己的自定义分类（JWT身份是字符串，统一按字符串比较）
+    if str(category.user_id) != str(user_id):
         return jsonify({'error': '无权删除该分类'}), 403
 
     # 检查是否有关联的 Transaction 记录

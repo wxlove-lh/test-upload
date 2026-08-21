@@ -50,8 +50,9 @@ export const useUserStore = defineStore('user', () => {
 
   async function fetchUserInfo() {
     try {
-      const res = await api.get('/auth/me')
-      userInfo.value = res.user
+      // /auth/me 直接返回用户对象（拦截器已剥掉 response.data），没有 .user 包装
+      const user = await api.get('/auth/me')
+      userInfo.value = user
     } catch (e) {
       // token无效，清除
       logout()

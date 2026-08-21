@@ -3,7 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 const routes = [
   {
     path: '/',
-    redirect: '/bookkeeping',
+    redirect: '/app',
   },
   {
     path: '/login',
@@ -11,6 +11,31 @@ const routes = [
     component: () => import('@/views/Login.vue'),
     meta: { requireAuth: false },
   },
+  {
+    path: '/app',
+    name: 'Workbench',
+    component: () => import('@/views/Workbench.vue'),
+    meta: { requireAuth: true },
+    children: [
+      {
+        path: '',
+        redirect: '/app/chat/ai-bookkeeping',
+      },
+      {
+        path: 'chat/:feature',
+        name: 'Chat',
+        component: () => import('@/views/ChatView.vue'),
+        meta: { requireAuth: true },
+      },
+      {
+        path: 'tutorial/tax',
+        name: 'TaxTutorial',
+        component: () => import('@/views/TaxTutorial.vue'),
+        meta: { requireAuth: true },
+      },
+    ],
+  },
+  // 移动端旧页面保留，作为窄屏/过渡入口
   {
     path: '/bookkeeping',
     name: 'Bookkeeping',
@@ -51,11 +76,14 @@ const router = createRouter({
 // 页面标题映射
 const titleMap = {
   Login: '登录 - AI虚拟文员',
+  Workbench: 'AI虚拟文员',
+  Chat: 'AI虚拟文员',
   Bookkeeping: '记账 - AI虚拟文员',
   Ledger: '台账 - AI虚拟文员',
   Analytics: '数据分析 - AI虚拟文员',
   Profile: '我的 - AI虚拟文员',
   Pricing: '定价 - AI虚拟文员',
+  TaxTutorial: '报税流程教程 - AI虚拟文员',
 }
 
 // 路由守卫：检查登录状态 + 设置标题
@@ -66,9 +94,9 @@ router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
 
   if (to.name === 'Login') {
-    // 已登录用户访问登录页，直接跳转到首页
+    // 已登录用户访问登录页，直接跳转到工作台
     if (token) {
-      next('/bookkeeping')
+      next('/app')
     } else {
       next()
     }

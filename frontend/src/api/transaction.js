@@ -24,3 +24,13 @@ export function getTransactionSummary(params) {
 export function exportTransactions(params) {
   return api.get('/transactions/export', { params, responseType: 'blob' })
 }
+
+// 上传凭证图片
+export function uploadVouchers(id, fileList) {
+  const formData = new FormData()
+  fileList.forEach(file => formData.append('images', file))
+  return api.post(`/transactions/${id}/vouchers`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000,
+  })
+}

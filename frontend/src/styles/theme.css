@@ -1,0 +1,97 @@
+/* ============================================================
+   AI虚拟文员 · 全局主题
+   设计风格：现代简洁商务风
+   主色：深绿（钱/账的直觉色，与登录页呼应）
+   ============================================================ */
+
+:root {
+  /* ── 品牌主色 ── */
+  --brand: #123F33;          /* 主深绿 */
+  --brand-strong: #0D2E26;   /* 更深(悬浮/按压) */
+  --brand-soft: #EAF3EF;     /* 浅绿底(选中/高亮) */
+  --brand-tint: #F4F8F6;     /* 极浅绿(卡片/区块底) */
+
+  /* ── 中性色板 ── */
+  --ink: #1F2421;            /* 主文字 */
+  --ink-2: #4A5560;          /* 次级文字 */
+  --ink-3: #8A938D;          /* 弱文字/提示 */
+  --line: #E6EAE7;           /* 分隔线 */
+  --bg: #F6F8F7;             /* 页面底色(浅灰) */
+  --card: #FFFFFF;           /* 卡片底色 */
+  --white: #FFFFFF;
+
+  /* ── 语义色(克制使用) ── */
+  --up: #0E8A5F;             /* 收入/增长(绿) */
+  --down: #D14343;           /* 支出/下降(红) */
+  --warn: #C9932E;           /* 警示/提示(金) */
+
+  /* ── 形状与阴影 ── */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-1: 0 1px 3px rgba(18, 63, 51, 0.06);
+  --shadow-2: 0 4px 16px rgba(18, 63, 51, 0.08);
+  --shadow-3: 0 12px 32px rgba(18, 63, 51, 0.12);
+
+  /* ── 字号阶梯 ── */
+  --fs-caption: 12px;
+  --fs-body: 14px;
+  --fs-title: 16px;
+  --fs-h2: 20px;
+  --fs-h1: 28px;
+}
+
+/* ── Vant 组件全局覆盖：把默认蓝换成深绿 ── */
+:root:root {
+  --van-primary-color: var(--brand);
+  --van-success-color: var(--up);
+  --van-danger-color: var(--down);
+  --van-warning-color: var(--warn);
+  --van-text-color: var(--ink);
+  --van-text-color-2: var(--ink-2);
+  --van-text-color-3: var(--ink-3);
+  --van-border-color: var(--line);
+  --van-background: var(--bg);
+  --van-background-2: var(--card);
+  --van-radius-md: var(--radius-sm);
+  --van-radius-lg: var(--radius-md);
+  --van-nav-bar-background: var(--card);
+  --van-nav-bar-title-text-color: var(--ink);
+  --van-nav-bar-icon-color: var(--ink-2);
+  --van-tabbar-background: var(--card);
+  --van-tabbar-item-active-color: var(--brand);
+  --van-cell-group-background: transparent;
+  --van-button-default-border-color: var(--line);
+  --van-button-primary-background: var(--brand);
+  --van-button-primary-border-color: var(--brand);
+  --van-tabs-bottom-bar-color: var(--brand);
+  --van-tab-active-text-color: var(--brand);
+  --van-tabs-nav-background: var(--card);
+  --van-picker-background: var(--card);
+  --van-popup-background: var(--card);
+  --van-calendar-background: var(--card);
+  --van-field-input-text-color: var(--ink);
+  --van-toast-background: rgba(18, 63, 51, 0.88);
+  --van-tag-primary-color: var(--brand);
+}
+
+/* ── 全局基础 ── */
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+* { box-sizing: border-box; }
+
+/* 通用卡片 */
+.g-card {
+  background: var(--card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1);
+  border: 1px solid rgba(18, 63, 51, 0.05);
+}

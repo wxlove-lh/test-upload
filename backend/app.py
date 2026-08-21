@@ -19,7 +19,7 @@ def create_app(config_name=None):
     CORS(app)  # 开发阶段允许所有来源
 
     # 导入所有模型（确保SQLAlchemy能发现它们）
-    from models import User, Transaction, ModificationLog, Category, ReferralRecord, Coupon  # noqa: F401
+    from models import User, Transaction, ModificationLog, Category, ReferralRecord, Coupon, Customer  # noqa: F401
 
     # 注册Blueprint（route文件后续创建，用try/except优雅处理）
     _register_blueprints(app)
@@ -27,10 +27,34 @@ def create_app(config_name=None):
     # 在app context中创建所有表并初始化默认分类
     with app.app_context():
         db.create_all()
+        _auto_migrate_columns(app)
         from models.category import init_default_categories
         init_default_categories()
 
     return app
+
+
+def _auto_migrate_columns(app):
+    """轻量自动补列：为已存在的SQLite表补上新增字段（演示项目不引入复杂迁移）。
+
+    每次启动幂等执行：只补缺失的列，不动已有数据。
+    """
+    try:
+        from sqlalchemy import inspect, text
+        insp = inspect(db.engine)
+        if 'transactions' not in insp.get_table_names():
+            return
+        existing = {c['name'] for c in insp.get_columns('transactions')}
+        additions = {
+            'customer_name': 'ALTER TABLE transactions ADD COLUMN customer_name VARCHAR(50)',
+        }
+        with db.engine.begin() as conn:
+            for col, ddl in additions.items():
+                if col not in existing:
+                    conn.execute(text(ddl))
+                    app.logger.info("已自动补充列: transactions.%s", col)
+    except Exception as e:
+        app.logger.warning("自动补列跳过: %s", str(e))
 
 
 def _register_blueprints(app):
@@ -43,6 +67,8 @@ def _register_blueprints(app):
         ('routes.payment', 'payment_bp', '/api/payments'),
         ('routes.referral', 'referral_bp', '/api/referrals'),
         ('routes.category', 'category_bp', '/api/categories'),
+        ('routes.customer', 'customer_bp', '/api/customers'),
+        ('routes.tax', 'tax_bp', '/api/tax'),
     ]
 
     for module_path, bp_name, url_prefix in blueprints:

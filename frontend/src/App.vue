@@ -24,9 +24,9 @@ const route = useRoute()
 const router = useRouter()
 const activeTab = ref(0)
 
-// 登录页不显示底部导航栏
+// 登录页和工作台（/app）不显示底部导航栏
 const showTabbar = computed(() => {
-  return route.path !== '/login'
+  return route.path !== '/login' && !route.path.startsWith('/app')
 })
 
 // tab路由映射

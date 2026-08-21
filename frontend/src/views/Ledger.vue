@@ -16,7 +16,7 @@
       </van-button>
 
       <!-- 分类筛选 -->
-      <van-dropdown-menu class="filter-dropdown" active-color="#1989fa">
+      <van-dropdown-menu class="filter-dropdown" active-color="var(--brand)">
         <van-dropdown-item v-model="filterCategory" :options="categoryOptions" />
         <van-dropdown-item v-model="filterType" :options="typeOptions" />
       </van-dropdown-menu>
@@ -34,6 +34,7 @@
         :category="appliedCategory"
         :type="appliedType"
         @edit="openEdit"
+        @voucher="openVoucher"
         @total-change="onTotalChange"
       />
     </div>
@@ -74,6 +75,13 @@
       :transaction="currentTransaction"
       @refresh="handleRefresh"
     />
+
+    <!-- 凭证弹窗 -->
+    <VoucherPanel
+      v-model:show="showVoucher"
+      :transaction="currentTransaction"
+      @uploaded="handleRefresh"
+    />
   </div>
 </template>
 
@@ -82,6 +90,7 @@ import { ref, computed, onMounted } from 'vue'
 import TransactionList from '@/components/TransactionList.vue'
 import EditTransaction from '@/components/EditTransaction.vue'
 import ExportButton from '@/components/ExportButton.vue'
+import VoucherPanel from '@/components/VoucherPanel.vue'
 import { getTransactionSummary } from '@/api/transaction'
 
 // ─── 筛选条件 ───
@@ -104,6 +113,7 @@ const listRef = ref(null)
 const totalCount = ref(0)
 const currentTransaction = ref(null)
 const showEdit = ref(false)
+const showVoucher = ref(false)
 
 const summary = ref({
   total_income: 0,
@@ -195,6 +205,12 @@ function openEdit(item) {
   showEdit.value = true
 }
 
+/** 打开凭证弹窗 */
+function openVoucher(item) {
+  currentTransaction.value = { ...item }
+  showVoucher.value = true
+}
+
 /** 编辑保存后刷新 */
 function handleRefresh() {
   if (listRef.value) {
@@ -212,7 +228,7 @@ onMounted(() => {
 <style scoped>
 .ledger-page {
   min-height: 100vh;
-  background-color: #f7f8fa;
+  background-color: var(--bg);
   padding-bottom: 120px; /* tabbar + summary-bar */
 }
 
@@ -222,8 +238,8 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  background: #fff;
-  border-bottom: 1px solid #f0f0f0;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
 }
 
 .date-btn {
@@ -255,8 +271,8 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
-  background: #fff;
-  border-top: 1px solid #f0f0f0;
+  background: var(--card);
+  border-top: 1px solid var(--line);
   z-index: 100;
 }
 
@@ -268,7 +284,7 @@ onMounted(() => {
 
 .summary-item {
   font-size: 12px;
-  color: #666;
+  color: var(--ink-2);
 }
 
 .summary-item strong {
@@ -278,14 +294,14 @@ onMounted(() => {
 }
 
 .summary-item.income strong {
-  color: #07c160;
+  color: var(--up);
 }
 
 .summary-item.expense strong {
-  color: #ee0a24;
+  color: var(--down);
 }
 
 .summary-item.profit strong {
-  color: #1989fa;
+  color: var(--brand);
 }
 </style>
