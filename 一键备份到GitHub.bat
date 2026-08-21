@@ -59,11 +59,12 @@ git add .
 if errorlevel 1 goto error
 
 echo [2/3] 生成备份记录...
+set HAS_NEW=1
 git commit -m "自动备份 %date% %time%"
 if errorlevel 1 (
+    set HAS_NEW=0
     echo.
-    echo 没有新改动，无需备份。
-    goto done
+    echo 没有新改动，继续检查有没有之前没上传的提交...
 )
 
 echo [3/3] 上传中...
@@ -83,7 +84,11 @@ if errorlevel 1 (
 
 :success
 echo.
-echo 备份成功！代码已上传到 GitHub。
+if "%HAS_NEW%"=="1" (
+    echo 备份成功！代码已上传到 GitHub。
+) else (
+    echo 上传完成！之前没传上去的提交，这次也全部推上去了。
+)
 goto done
 
 :error
