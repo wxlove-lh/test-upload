@@ -66,10 +66,22 @@ if errorlevel 1 (
     goto done
 )
 
-echo [3/3] 上传中（第一次会弹出 GitHub 登录框）...
+echo [3/3] 上传中...
 git push -u origin main
-if errorlevel 1 goto error
+if errorlevel 1 (
+    REM 第一次推送时，GitHub 旧仓库里可能有测试内容（历史不一致），自动覆盖一次（仅此一次）
+    git rev-parse --verify refs/remotes/origin/main >nul 2>nul
+    if errorlevel 1 (
+        echo.
+        echo 检测到 GitHub 仓库里有旧测试内容，正在覆盖一次（以后不会再出现）...
+        git push -u origin main --force
+        if errorlevel 1 goto error
+        goto success
+    )
+    goto error
+)
 
+:success
 echo.
 echo 备份成功！代码已上传到 GitHub。
 goto done
