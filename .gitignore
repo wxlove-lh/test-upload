@@ -29,3 +29,7 @@ uploads/
 
 # Backup files
 *.bak
+
+# ÁÙÊ±À¬»øÎÄ¼ş
+*.tmp
+.~lock.*
